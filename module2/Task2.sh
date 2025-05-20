@@ -1,5 +1,6 @@
 # 2. Compare two numbers
 
+#! /bin/bash
 read -p "Enter 2 numbers to comapre" a b
 
 if [ $a -gt $b ]; then
