@@ -8,7 +8,7 @@ else
     echo "Installing MySQL"
 fi
 
-apt install mysql-serveWDBHCWBCUWUCGWGYCGWUGCGWYGCYGWCYGWr -y
+apt install mysql-server -y
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to install MySQL"
