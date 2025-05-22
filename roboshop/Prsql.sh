@@ -8,7 +8,7 @@ else
     exit 1
 fi
 
-dnf install mysql-community-server -y
+dnf install mysql -y
 if [ $? -ne 0 ]; then
     echo "Sorry inatllation failed"
     exit 1
