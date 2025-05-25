@@ -6,7 +6,7 @@ SUBNET_ID="subnet-01be324df23d176f9"
 ZONE_ID="Z05550482K6DBOPR7GPPB"
 DOMAIN_NAME="satyology.site"
 
-INSTANCES=("MONGODB" "REDDIS" "MYSQL" "RABBITMQ" "CATALOGUE" "USER" "CART" "SHIPPING" "PAYMENT" "DISPATCH" "FRONTEND")
+INSTANCES=("MONGODB" "REDIS" "MYSQL" "RABBITMQ" "CATALOGUE" "USER" "CART" "SHIPPING" "PAYMENT" "DISPATCH" "FRONTEND")
 
 for INSTANCE in "${INSTANCES[@]}"; do
         echo "Launching instance $INSTANCE"
@@ -20,10 +20,19 @@ for INSTANCE in "${INSTANCES[@]}"; do
                 --query "Instances[0].InstanceId" \
                 --output text)
 
+        if [ $? -ne 0 ]; then
+                echo "Failed to launch instance $INSTANCE"
+                exit 1
+        fi
+
         echo "Instance ID: $INSTANCE_ID"
 
         # Wait for the instance to be in running state
         aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+        if [ $? -ne 0 ]; then
+                echo "Failed to wait for instance $INSTANCE to be running"
+                exit 1
+        fi
 
         if [ "$INSTANCE" == "FRONTEND" ]; then
                 IP=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
@@ -35,6 +44,11 @@ for INSTANCE in "${INSTANCES[@]}"; do
                         --query "Reservations[0].Instances[0].PrivateIpAddress" \
                         --output text)
                 RECORD_NAME="$INSTANCE.$DOMAIN_NAME"
+        fi
+
+        if [ $? -ne 0 ]; then
+                echo "Failed to get IP address for instance $INSTANCE"
+                exit 1
         fi
 
         echo "Updating Route53 Record: $RECORD_NAME -> $IP"
@@ -55,4 +69,9 @@ for INSTANCE in "${INSTANCES[@]}"; do
                 }
             }]
         }"
+
+        if [ $? -ne 0 ]; then
+                echo "Failed to update DNS record for $INSTANCE"
+                exit 1
+        fi
 done
