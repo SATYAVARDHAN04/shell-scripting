@@ -79,8 +79,11 @@ cp "$SCRIPT_DIR/mongo.repo" /etc/yum.repos.d/mongo.repo &>>"$LOG_FILE"
 dnf install mongodb-mongosh -y &>>"$LOG_FILE"
 VALIDATE $? "Installing MongoDB client"
 
-STATUS=$(mongosh --host mongodb.satyology.site --eval 'db.getMongo().getDBNames().indexOf("catalogue")' | grep -Eo '^[0-9]+$')
-if [ "$STATUS" -lt 0 ]; then
+# Fixed MongoDB data check
+STATUS=$(mongosh --quiet --host mongodb.satyology.site --eval 'db.getMongo().getDBNames().indexOf("catalogue")' | grep -Eo '^[0-9]+')
+echo "MongoDB STATUS result: $STATUS" | tee -a "$LOG_FILE"
+
+if [[ -z "$STATUS" || "$STATUS" -lt 0 ]]; then
     mongosh --host mongodb.satyology.site </app/db/master-data.js &>>"$LOG_FILE"
     VALIDATE $? "Importing MongoDB data"
 else
