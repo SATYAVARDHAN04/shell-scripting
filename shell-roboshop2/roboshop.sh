@@ -1,5 +1,6 @@
-#!/bin/bash
+#! /bin/bash
 
+# TO RUN ROBOSHOP.SH NO NEED FOR ROOT ACCESS
 AMI_ID="ami-09c813fb71547fc4f"
 SG_ID="sg-03d93947d06697ec0"
 SUBNET_ID="subnet-01be324df23d176f9"
