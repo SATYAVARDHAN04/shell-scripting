@@ -9,8 +9,8 @@ DOMAIN_NAME="satyology.site"
 
 INSTANCES=("mongodb" "mysql" "redis" "rabbitmq" "cart" "user" "dispatch" "payment" "shipping" "catalogue" "frontend")
 
-for instance in "${INSTANCES[@]}"; do
-    #for instance in $@; do
+#for instance in "${INSTANCES[@]}"; do
+for instance in $@; do
     echo "Creating instance: $instance"
     INSTANCE_ID=$(aws ec2 run-instances \
         --image-id $AMI_ID \
