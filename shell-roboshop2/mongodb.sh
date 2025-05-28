@@ -57,3 +57,5 @@ VALIDATE $? "Editing mongod.conf for remote connections"
 # Step 6: Restart service
 systemctl restart mongod &>>$LOG_FILE
 VALIDATE $? "Restarting MongoDB"
+
+echo "Script completed at: $(date)" | tee -a "$LOG_FILE"

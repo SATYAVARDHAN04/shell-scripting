@@ -18,9 +18,12 @@ mkdir -p $LOG_FOLDER
 echo "Script started at: $(date)" | tee -a $LOG_FILE
 
 # Root access check
-if [ $USERID -ne 0 ]; then
-    echo -e "$R ERROR: Please run this script with root privileges $N" | tee -a $LOG_FILE
+# check root access
+if [ "$USERID" -ne 0 ]; then
+    echo -e "$R ERROR:: Please run this script with root access $N" | tee -a "$LOG_FILE"
     exit 1
+else
+    echo "You are running with root access" | tee -a "$LOG_FILE"
 fi
 
 # Validation function
@@ -54,9 +57,18 @@ VALIDATE $? "Remove the default content"
 curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip &>>$LOG_FILE
 VALIDATE $? "Download the frontend content"
 
+mkdir -p /usr/share/nginx/html &>>"$LOG_FILE"
 cd /usr/share/nginx/html
 unzip /tmp/frontend.zip &>>$LOG_FILE
 VALIDATE $? "Extract the frontend content"
 
+rm -rf /etc/nginx/nginx.conf &>>"$LOG_FILE"
+VALIDATE $? "Removing default nginx conf"
+
+cp "$SCRIPT_DIR/nginx.conf" /etc/nginx/nginx.conf &>>"$LOG_FILE"
+VALIDATE $? "Copying nginx.conf"
+
 systemctl restart nginx &>>$LOG_FILE
 VALIDATE $? "Restarting Nginx Server"
+
+echo -e "$G Script completed successfully at: $(date) $N" | tee -a "$LOG_FILE"

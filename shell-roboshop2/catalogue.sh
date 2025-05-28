@@ -18,9 +18,11 @@ mkdir -p $LOG_FOLDER
 echo "Script started at: $(date)" | tee -a $LOG_FILE
 
 # Root access check
-if [ $USERID -ne 0 ]; then
-    echo -e "$R ERROR: Please run this script with root privileges $N" | tee -a $LOG_FILE
+if [ "$USERID" -ne 0 ]; then
+    echo -e "$R ERROR: Run the script as root $N" | tee -a "$LOG_FILE"
     exit 1
+else
+    echo -e "$G Running with root access $N" | tee -a "$LOG_FILE"
 fi
 
 # Validation function
@@ -51,6 +53,7 @@ else
     echo -e "roboshop user already exists ... $Y SKIPPING $N" | tee -a $LOG_FILE
 fi
 
+# App setup
 mkdir -p /app
 VALIDATE $? "Creating /app directory"
 
@@ -65,7 +68,7 @@ VALIDATE $? "Extracting app code"
 npm install &>>$LOG_FILE
 VALIDATE $? "Installing node dependencies"
 
-cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service
+cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service &>>"$LOG_FILE"
 VALIDATE $? "Copying catalogue systemd service"
 
 systemctl daemon-reload &>>$LOG_FILE
@@ -78,11 +81,15 @@ cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo
 dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB client"
 
-# Check if data is already loaded
-STATUS=$(mongosh --host mongodb.satyology.site --eval 'db.getMongo().getDBNames().indexOf("catalogue")' --quiet)
-if [ "$STATUS" -lt 0 ]; then
-    mongosh --host mongodb.satyology.site </app/db/master-data.js &>>$LOG_FILE
-    VALIDATE $? "Loading data into MongoDB"
+# Fixed MongoDB data check
+STATUS=$(mongosh --quiet --host mongodb.satyology.site --eval 'db.getMongo().getDBNames().indexOf("catalogue")' | grep -Eo '^[0-9]+')
+echo "MongoDB STATUS result: $STATUS" | tee -a "$LOG_FILE"
+
+if [[ -z "$STATUS" || "$STATUS" -lt 0 ]]; then
+    mongosh --host mongodb.satyology.site </app/db/master-data.js &>>"$LOG_FILE"
+    VALIDATE $? "Importing MongoDB data"
 else
-    echo -e "MongoDB data already exists ... $Y SKIPPING $N" | tee -a $LOG_FILE
+    echo -e "MongoDB data already exists ... $Y SKIPPING $N" | tee -a "$LOG_FILE"
 fi
+
+echo "Script completed at: $(date)" | tee -a "$LOG_FILE"
